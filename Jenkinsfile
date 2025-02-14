@@ -1,17 +1,29 @@
 pipeline {
     agent any
 
+    tools {
+        nodejs 'NodeJS 20'  // Make sure this matches your NodeJS installation name
+    }
+
     environment {
         DOCKER_REGISTRY = 'your-registry.com'
         DOCKER_IMAGE = 'a-board-backend'
         DOCKER_TAG = "${BRANCH_NAME}-${BUILD_NUMBER}"
-        DATABASE_URL = credentials('database-url')
     }
 
     stages {
-        stage('Checkout') {
+        stage('Checkout SCM') {
             steps {
                 checkout scm
+            }
+        }
+
+        stage('Tool Install') {
+            steps {
+                script {
+                    sh 'node --version'
+                    sh 'npm --version'
+                }
             }
         }
 
@@ -31,22 +43,22 @@ pipeline {
 
         stage('Build') {
             steps {
-                sh 'npm run build'
-                sh 'npx prisma generate'
+                script {
+                    sh 'npm run build'
+                    // Only run prisma generate if DATABASE_URL is available
+                    withCredentials([string(credentialsId: 'database-url', variable: 'DATABASE_URL')]) {
+                        sh 'npx prisma generate'
+                    }
+                }
             }
         }
 
-        stage('Docker Build & Push') {
+        stage('Docker Build') {
             steps {
                 script {
-                    docker.withRegistry("https://${DOCKER_REGISTRY}", 'docker-registry-credentials') {
-                        def customImage = docker.build("${DOCKER_REGISTRY}/${DOCKER_IMAGE}:${DOCKER_TAG}")
-                        customImage.push()
-
-                        if (env.BRANCH_NAME == 'prod') {
-                            customImage.push('latest')
-                        }
-                    }
+                    sh """
+                        docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG} .
+                    """
                 }
             }
         }
@@ -83,7 +95,15 @@ pipeline {
 
     post {
         always {
-            cleanWs()
+            node('any') {  // This ensures FilePath context is available
+                cleanWs()
+            }
+        }
+        success {
+            echo 'Pipeline completed successfully!'
+        }
+        failure {
+            echo 'Pipeline failed!'
         }
     }
 }
