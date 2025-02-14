@@ -1,0 +1,50 @@
+flowchart TB
+%% Client Layer
+    Client([Client Browser])
+
+%% Frontend Layer
+    subgraph Frontend
+        UIComponents[UI Components]
+        ReactQuery[React Query]
+        APIClient[API Client]
+        StateManagement[State Management]
+    end
+
+%% Backend Layer
+    subgraph Backend
+        Controller[NestJS Controllers]
+        Service[Services]
+        Repository[Repositories]
+        DTO[DTOs]
+
+    %% Data Flow in Backend
+        Controller --> |Validate DTO| DTO
+        DTO --> |Process| Service
+        Service --> |CRUD| Repository
+    end
+
+%% Database Layer
+    subgraph Database
+        PrismaClient[Prisma Client]
+        DB[(PostgreSQL)]
+        Cache[(Redis)]
+    end
+
+%% Connections
+    Client <--> |HTTP/WebSocket| UIComponents
+    UIComponents <--> |State Updates| StateManagement
+    UIComponents <--> |Data Fetch| ReactQuery
+    ReactQuery <--> |API Calls| APIClient
+    APIClient <--> |HTTP| Controller
+    Repository <--> PrismaClient
+    PrismaClient <--> DB
+    Service <--> |Cache| Cache
+
+%% Styles
+    classDef frontend fill:#bbf,stroke:#333,stroke-width:2px
+    classDef backend fill:#bfb,stroke:#333,stroke-width:2px
+    classDef database fill:#fbb,stroke:#333,stroke-width:2px
+
+    class UIComponents,ReactQuery,APIClient,StateManagement frontend
+    class Controller,Service,Repository,DTO backend
+    class PrismaClient,DB,Cache database

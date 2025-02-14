@@ -1,0 +1,60 @@
+flowchart TB
+%% User Entry Points
+    Start((Start)) --> Login[Login/Register]
+    Start --> ViewPosts[View Posts]
+
+%% Authentication Flow
+    Login -->|Username/Password| AuthService{Auth Service}
+    AuthService -->|Success| GenerateToken[Generate JWT]
+    AuthService -->|Fail| LoginError[Error Message]
+    GenerateToken --> StoreToken[Store Token]
+
+%% Post Management Flow
+    ViewPosts --> PostService{Post Service}
+    PostService -->|Fetch| DisplayPosts[Display Posts]
+
+    subgraph "Post Operations"
+        CreatePost[Create Post] -->|Requires Auth| PostValidation{Validate}
+        PostValidation -->|Valid| SavePost[Save Post]
+        PostValidation -->|Invalid| PostError[Show Error]
+
+        EditPost[Edit Post] -->|Check Owner| PostValidation
+        DeletePost[Delete Post] -->|Check Owner| PostValidation
+    end
+
+%% Comment System
+    subgraph "Comment Operations"
+        AddComment[Add Comment] -->|Requires Auth| CommentService{Comment Service}
+        CommentService -->|Valid| SaveComment[Save Comment]
+        CommentService -->|Invalid| CommentError[Show Error]
+
+        ViewComments[View Comments] --> FetchComments[Fetch Comments]
+    end
+
+%% Community Management
+    subgraph "Community Features"
+        SelectCommunity[Select Community] --> CommunityService{Community Service}
+        CommunityService -->|Fetch| DisplayCommunity[Display Community Posts]
+
+        FilterByCategory[Filter by Category] --> CommunityService
+    end
+
+%% Database Operations
+    SavePost --> Database[(Database)]
+    SaveComment --> Database
+    FetchComments --> Database
+    DisplayCommunity --> Database
+
+%% State Management
+    StoreToken --> UserState[User State]
+    UserState -->|Auth Required| CreatePost
+    UserState -->|Auth Required| AddComment
+    UserState -->|Auth Required| EditPost
+    UserState -->|Auth Required| DeletePost
+
+    style Start fill:#f96,stroke:#333,stroke-width:2px
+    style Database fill:#f9f,stroke:#333,stroke-width:2px
+    style AuthService fill:#bbf,stroke:#333,stroke-width:2px
+    style PostService fill:#bfb,stroke:#333,stroke-width:2px
+    style CommentService fill:#bfb,stroke:#333,stroke-width:2px
+    style CommunityService fill:#bfb,stroke:#333,stroke-width:2px

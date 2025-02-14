@@ -1,0 +1,27 @@
+sequenceDiagram
+    actor User
+    participant UI
+    participant AuthService
+    participant PostService
+    participant Database
+
+%% Create Post Flow
+    User->>UI: Click Create Post
+    UI->>AuthService: Check Authentication
+    AuthService-->>UI: Authorized
+    User->>UI: Fill Post Details
+    UI->>PostService: Create Post
+    PostService->>Database: Save Post
+    Database-->>PostService: Success
+    PostService-->>UI: Post Created
+    UI-->>User: Show Success
+
+%% Comment Flow
+    User->>UI: Add Comment
+    UI->>AuthService: Check Authentication
+    AuthService-->>UI: Authorized
+    UI->>PostService: Create Comment
+    PostService->>Database: Save Comment
+    Database-->>PostService: Success
+    PostService-->>UI: Comment Added
+    UI-->>User: Show Comment

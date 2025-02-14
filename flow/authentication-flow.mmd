@@ -1,0 +1,29 @@
+sequenceDiagram
+    participant C as Client
+    participant F as Frontend
+    participant A as Auth Service
+    participant D as Database
+    participant R as Redis Cache
+
+%% Login Flow
+    C->>F: Submit Login
+    F->>A: POST /auth/login
+    A->>D: Check Credentials
+    D-->>A: User Data
+    A->>A: Generate JWT
+    A->>R: Cache Token
+    A-->>F: Return Token & User
+    F-->>C: Update UI State
+
+%% Protected Route Access
+    C->>F: Access Protected Route
+    F->>A: Verify Token
+    A->>R: Check Token Cache
+    R-->>A: Token Status
+    alt Valid Token
+        A-->>F: Allow Access
+        F-->>C: Show Protected Content
+    else Invalid Token
+        A-->>F: Deny Access
+        F-->>C: Redirect to Login
+    end

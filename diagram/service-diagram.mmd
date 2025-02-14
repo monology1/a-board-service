@@ -1,0 +1,23 @@
+graph TB
+    subgraph "Authentication Service"
+        Auth[Auth Service]
+        Auth --> UserRepo[(User Repository)]
+    end
+
+    subgraph "Post Service"
+        Post[Post Service]
+        Post --> PostRepo[(Post Repository)]
+        Post --> CommentRepo[(Comment Repository)]
+    end
+
+    subgraph "Community Service"
+        Community[Community Service]
+        Community --> CommunityRepo[(Community Repository)]
+    end
+
+    AuthController --> Auth
+    PostController --> Post
+    CommunityController --> Community
+
+    Auth -.-> PostService
+    Community -.-> PostService

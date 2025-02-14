@@ -1,0 +1,51 @@
+graph TB
+%% Frontend Section
+subgraph "Frontend Layer"
+Client[Browser/Client] --> Next[Next.js]
+Next --> ReactComponents[React Components]
+Next --> Pages[Pages]
+Next --> FrontendRouting[Routing]
+ReactComponents --> UIComponents[UI Components]
+ReactComponents --> SharedComponents[Shared Components]
+ReactComponents --> StateManagement[State Management]
+end
+
+%% API Layer
+subgraph "API Layer"
+FrontendRouting --> APIGateway[API Gateway]
+APIGateway --> AuthModule[Auth Module]
+APIGateway --> UserModule[User Module]
+APIGateway --> BoardModule[Board Module]
+end
+
+%% Backend Section
+subgraph "Business Layer"
+AuthModule --> AuthService[Auth Service]
+UserModule --> UserService[User Service]
+BoardModule --> BoardService[Board Service]
+end
+
+%% Database Layer
+subgraph "Data Layer"
+AuthService --> PrismaORM[Prisma ORM]
+UserService --> PrismaORM
+BoardService --> PrismaORM
+PrismaORM --> PostgreSQL[(PostgreSQL)]
+end
+
+%% External Services
+subgraph "External Services"
+BoardService --> S3[AWS S3]
+AuthService --> Redis[(Redis Cache)]
+end
+
+%% Deployment
+subgraph "Infrastructure"
+LoadBalancer[Load Balancer] --> Next
+LoadBalancer --> APIGateway
+end
+
+style Client fill:#f9f,stroke:#333,stroke-width:2px
+style Next fill:#bbf,stroke:#333,stroke-width:2px
+style APIGateway fill:#bfb,stroke:#333,stroke-width:2px
+style PostgreSQL fill:#fbb,stroke:#333,stroke-width:2px
