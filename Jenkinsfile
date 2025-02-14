@@ -2,11 +2,10 @@ pipeline {
     agent any
 
     tools {
-        nodejs 'NodeJS 20'  // Make sure this matches your NodeJS installation name
+        nodejs 'NodeJS 20.11.1'  // Updated to supported version
     }
 
     environment {
-        DOCKER_REGISTRY = 'your-registry.com'
         DOCKER_IMAGE = 'a-board-backend'
         DOCKER_TAG = "${BRANCH_NAME}-${BUILD_NUMBER}"
     }
@@ -36,20 +35,12 @@ pipeline {
         stage('Lint & Test') {
             steps {
                 sh 'npm run lint'
-                // Add tests if available
-                // sh 'npm run test'
             }
         }
 
         stage('Build') {
             steps {
-                script {
-                    sh 'npm run build'
-                    // Only run prisma generate if DATABASE_URL is available
-                    withCredentials([string(credentialsId: 'database-url', variable: 'DATABASE_URL')]) {
-                        sh 'npx prisma generate'
-                    }
-                }
+                sh 'npm run build'
             }
         }
 
@@ -59,22 +50,6 @@ pipeline {
                     sh """
                         docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG} .
                     """
-                }
-            }
-        }
-
-        stage('Database Migration') {
-            when {
-                anyOf {
-                    branch 'dev'
-                    branch 'prod'
-                }
-            }
-            steps {
-                script {
-                    withCredentials([string(credentialsId: 'database-url', variable: 'DATABASE_URL')]) {
-                        sh 'npx prisma migrate deploy'
-                    }
                 }
             }
         }
@@ -95,9 +70,7 @@ pipeline {
 
     post {
         always {
-            node('any') {  // This ensures FilePath context is available
-                cleanWs()
-            }
+            cleanWs()
         }
         success {
             echo 'Pipeline completed successfully!'
