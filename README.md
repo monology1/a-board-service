@@ -1,99 +1,222 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# A-Board Backend
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+## Project Structure
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://coveralls.io/github/nestjs/nest?branch=master" target="_blank"><img src="https://coveralls.io/repos/github/nestjs/nest/badge.svg?branch=master#9" alt="Coverage" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
-
-## Description
-
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
-
-## Project setup
-
-```bash
-$ npm install
+```
+backend/
+├── src/
+│   ├── modules/              # Feature modules
+│   │   ├── auth/            # Authentication module
+│   │   │   ├── controllers/ # Route controllers
+│   │   │   ├── services/    # Business logic
+│   │   │   ├── guards/      # Authentication guards
+│   │   │   ├── dto/        # Data transfer objects
+│   │   │   └── auth.module.ts
+│   │   │
+│   │   ├── users/          # User management module
+│   │   └── boards/         # Board management module
+│   │
+│   ├── common/             # Shared resources
+│   │   ├── decorators/    # Custom decorators
+│   │   ├── filters/       # Exception filters
+│   │   ├── guards/        # Common guards
+│   │   ├── interceptors/  # Request/Response interceptors
+│   │   └── pipes/         # Data transformation pipes
+│   │
+│   ├── config/            # Configuration
+│   │   ├── database.config.ts
+│   │   └── jwt.config.ts
+│   │
+│   ├── prisma/           # Database
+│   │   ├── migrations/   # Database migrations
+│   │   └── schema.prisma # Database schema
+│   │
+│   └── main.ts          # Application entry point
+│
+└── test/                # Test files
+    ├── unit/           # Unit tests
+    └── e2e/            # End-to-end tests
 ```
 
-## Compile and run the project
+## Naming Conventions
 
+### Files and Folders
+
+1. Modules:
+    - Use kebab-case for folders: `auth/`, `user-management/`
+    - Module files: `auth.module.ts`
+
+2. Components:
+    - Controllers: `auth.controller.ts`
+    - Services: `auth.service.ts`
+    - DTOs: `create-user.dto.ts`
+    - Entities: `user.entity.ts`
+
+3. Common:
+    - Decorators: `auth.decorator.ts`
+    - Guards: `jwt-auth.guard.ts`
+    - Filters: `http-exception.filter.ts`
+
+### Code Structure
+
+1. Controllers:
+```typescript
+@Controller('auth')
+export class AuthController {
+  constructor(private authService: AuthService) {}
+
+  @Post('login')
+  async login(@Body() loginDto: LoginDto) {
+    return this.authService.login(loginDto);
+  }
+}
+```
+
+2. Services:
+```typescript
+@Injectable()
+export class AuthService {
+  constructor(private prisma: PrismaService) {}
+
+  async findUser(id: number): Promise<User> {
+    return this.prisma.user.findUnique({ where: { id } });
+  }
+}
+```
+
+3. DTOs:
+```typescript
+export class CreateUserDto {
+  @IsEmail()
+  email: string;
+
+  @IsString()
+  @MinLength(8)
+  password: string;
+}
+```
+
+## Database Conventions
+
+1. Prisma Schema:
+```prisma
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  name      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+```
+
+2. Migrations:
+    - Descriptive names: `YYYYMMDDHHMMSS_create_users_table.ts`
+    - One migration per schema change
+
+## API Conventions
+
+1. Endpoints:
+    - Use RESTful naming
+    - Group by resource
+    - Version prefix: `/api/v1/`
+
+2. HTTP Methods:
+    - GET: Retrieve
+    - POST: Create
+    - PUT: Update (full)
+    - PATCH: Update (partial)
+    - DELETE: Remove
+
+3. Response Format:
+```typescript
+interface ApiResponse<T> {
+  success: boolean;
+  data?: T;
+  error?: string;
+  meta?: {
+    pagination?: {
+      page: number;
+      limit: number;
+      total: number;
+    };
+  };
+}
+```
+
+## Error Handling
+
+1. Exception Filter:
+```typescript
+@Catch(HttpException)
+export class HttpExceptionFilter implements ExceptionFilter {
+  catch(exception: HttpException, host: ArgumentsHost) {
+    // Implementation
+  }
+}
+```
+
+2. Custom Exceptions:
+```typescript
+export class UserNotFoundException extends NotFoundException {
+  constructor(userId: number) {
+    super(`User with id ${userId} not found`);
+  }
+}
+```
+
+## Testing
+
+1. Unit Tests:
+```typescript
+describe('AuthService', () => {
+  let service: AuthService;
+
+  beforeEach(async () => {
+    // Test setup
+  });
+
+  it('should validate user', async () => {
+    // Test implementation
+  });
+});
+```
+
+2. E2E Tests:
+```typescript
+describe('Auth (e2e)', () => {
+  it('/auth/login (POST)', () => {
+    // Test implementation
+  });
+});
+```
+
+## Development Setup
+
+1. Installation:
+```bash
+npm install
+```
+
+2. Database Setup:
+```bash
+npx prisma migrate dev
+npx prisma generate
+```
+
+3. Running the App:
 ```bash
 # development
-$ npm run start
+npm run start:dev
 
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+# production
+npm run build
+npm run start:prod
 ```
 
-## Run tests
+## Environment Variables
 
-```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+```env
+DATABASE_URL="postgresql://user:password@localhost:5432/dbname"
+JWT_SECRET="your-secret-key"
+PORT=4000
 ```
-
-## Deployment
-
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
-
-```bash
-$ npm install -g mau
-$ mau deploy
-```
-
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
-
-## Resources
-
-Check out a few resources that may come in handy when working with NestJS:
-
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
-
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
