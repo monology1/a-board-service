@@ -3,11 +3,12 @@ import { AuthService } from './auth.service';
 import { PrismaService } from '../../../shared/prisma/prisma.service';
 import { JwtService } from './jwt.service';
 import { UnauthorizedException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 
 describe('AuthService', () => {
   let service: AuthService;
   let prismaService: PrismaService;
-  let jwtService: JwtService;  // Declare at the top level
+  let jwtService: JwtService;
 
   // Create mocks
   const mockPrismaService = {
@@ -16,11 +17,16 @@ describe('AuthService', () => {
     },
   };
 
-  // Create mock for JwtService
+  // Create mock for JwtService with all required methods
   const mockJwtService = {
-    generateToken: jest.fn().mockResolvedValue('mock_token'),
+    generateToken: jest.fn(),
     verifyToken: jest.fn(),
-  } as unknown as jest.Mocked<JwtService>;
+  };
+
+  // Create mock for ConfigService
+  const mockConfigService = {
+    get: jest.fn(),
+  };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -34,19 +40,22 @@ describe('AuthService', () => {
           provide: JwtService,
           useValue: mockJwtService,
         },
+        {
+          provide: ConfigService,
+          useValue: mockConfigService,
+        },
       ],
     }).compile();
 
-    // Get service instances
     service = module.get<AuthService>(AuthService);
     prismaService = module.get<PrismaService>(PrismaService);
     jwtService = module.get<JwtService>(JwtService);
 
-    // Clear all mocks before each test
+    // Reset all mocks before each test
     jest.clearAllMocks();
   });
 
-  describe('signin', () => {
+  describe('signIn', () => {
     it("should return user token when username exists", async () => {
       // Arrange
       const username = "test";
@@ -66,7 +75,7 @@ describe('AuthService', () => {
       // Assert
       expect(result.access_token).toBe('mock_token');
       expect(result.user).toEqual(mockUser);
-      expect(mockJwtService.generateToken).toHaveBeenCalledWith(mockUser.id);  // Use mockJwtService instead
+      expect(mockJwtService.generateToken).toHaveBeenCalledWith(mockUser.id);
     });
 
     it("should throw UnauthorizedException when user does not exist", async () => {
@@ -79,5 +88,9 @@ describe('AuthService', () => {
         .rejects
         .toThrow(UnauthorizedException);
     });
+  });
+
+  afterEach(() => {
+    jest.resetAllMocks();
   });
 });
