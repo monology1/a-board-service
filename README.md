@@ -34,7 +34,6 @@ backend/
 │   └── main.ts          # Application entry point
 │
 └── test/                # Test files
-    ├── unit/           # Unit tests
     └── e2e/            # End-to-end tests
 ```
 
