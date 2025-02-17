@@ -6,6 +6,12 @@ import { ValidationPipe } from '@nestjs/common';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
+  app.enableCors({
+    origin: true, // Allow all origins (or specify specific origins, e.g., 'https://example.com')
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE', // Allowed HTTP methods
+    credentials: true, // Allow cookies and credentials
+  });
+
   app.setGlobalPrefix('api/v1');
 
   // Swagger configuration
@@ -20,7 +26,7 @@ async function bootstrap() {
   SwaggerModule.setup('docs', app, document);
 
   app.useGlobalPipes(new ValidationPipe());
-  await app.listen(3000);
+  await app.listen(8081);
 }
 
 bootstrap();

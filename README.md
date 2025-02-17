@@ -530,5 +530,5 @@ npm run start:prod
 ```env
 DATABASE_URL="postgresql://user:password@localhost:5432/dbname"
 JWT_SECRET="your-secret-key"
-PORT=4000
+PORT=8081
 ```
