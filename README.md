@@ -316,6 +316,11 @@ graph TB
    Community -.-> PostService
 ```
 
+# Swagger
+```
+http://localhost:3000/api/v1/docs
+```
+
 ## Technology Stack
 
 ### Frontend
