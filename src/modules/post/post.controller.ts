@@ -34,6 +34,11 @@ export class PostController {
     required: false,
     description: 'Filter posts by author',
   })
+  @ApiQuery({
+    name: 'title',
+    required: false,
+    description: 'Filter posts by title',
+  })
   @ApiOkResponse({
     description: 'List of posts',
     type: PostDto,
@@ -42,6 +47,7 @@ export class PostController {
   async getPosts(
     @Query('category') category?: string,
     @Query('author') author?: string,
+    @Query('title') title?: string,
   ): Promise<PostDto[]> {
     if (category) {
       return await this.postsService.findByCategory(category);

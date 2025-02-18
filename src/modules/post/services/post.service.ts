@@ -7,7 +7,11 @@ export class PostService {
   constructor(private readonly prisma: PrismaService) {}
 
   async findAll(): Promise<Post[]> {
-    return this.prisma.post.findMany();
+    return this.prisma.post.findMany({
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
   }
 
   async findById(id: number): Promise<Post | null> {
@@ -16,7 +20,15 @@ export class PostService {
 
   async findByCategory(category: string): Promise<Post[]> {
     return this.prisma.post.findMany({
-      where: { category: { equals: category, mode: 'insensitive' } },
+      where: {
+        category: {
+          equals: category,
+          mode: 'insensitive',
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
     });
   }
 
@@ -27,6 +39,23 @@ export class PostService {
           contains: author,
           mode: 'insensitive',
         },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+  }
+
+  async findByTitle(title: string): Promise<Post[]> {
+    return this.prisma.post.findMany({
+      where: {
+        title: {
+          contains: title, // partial matching
+          mode: 'insensitive',
+        },
+      },
+      orderBy: {
+        createdAt: 'desc', // newest to oldest
       },
     });
   }
