@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { Post } from '../interface/post.interface';
 import { PrismaService } from '../../../shared/prisma/prisma.service';
 import { PostWithCommentsDto } from '../dto/post-with-comment.dto';
+import { CreatePostDto } from '../dto/create-post.dto';
 
 @Injectable()
 export class PostService {
@@ -111,6 +112,29 @@ export class PostService {
         createdAt: comment.createdAt.toISOString(),
         updatedAt: comment.updatedAt.toISOString()
       }))
+    };
+  }
+
+  async create(createPostDto: CreatePostDto): Promise<Post> {
+    const createdPost = await this.prisma.post.create({
+      data: {
+        title: createPostDto.title,
+        content: createPostDto.content,
+        category: createPostDto.category,
+        excerpt: createPostDto.excerpt || null,
+        author: {
+          connect: { id: createPostDto.authorId },
+        },
+      },
+      include: {
+        author: true,
+      },
+    });
+
+    // Transform the returned post so that the `author` field is the username.
+    return {
+      ...createdPost,
+      author: createdPost.author.username,
     };
   }
 }

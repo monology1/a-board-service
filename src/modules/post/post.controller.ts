@@ -4,7 +4,8 @@ import {
   Param,
   Query,
   HttpException,
-  HttpStatus,
+  HttpStatus, Body,
+  Post as HttpPost,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -12,17 +13,36 @@ import {
   ApiResponse,
   ApiParam,
   ApiQuery,
-  ApiOkResponse, ApiNotFoundResponse,
+  ApiOkResponse,
+  ApiNotFoundResponse, ApiBody,
 } from '@nestjs/swagger';
 import { PostDto } from './dto/post.dto';
 import { PostService } from './services/post.service';
 import { PostWithCommentsDto } from './dto/post-with-comment.dto';
-import { Post } from '@prisma/client';
+import { Post as PostEntity } from '@prisma/client';
+import { CreatePostDto } from './dto/create-post.dto';
 
 @ApiTags('Posts')
 @Controller('posts')
 export class PostController {
   constructor(private readonly postsService: PostService) {}
+
+  @HttpPost()
+  @ApiOperation({ summary: 'Create a new post' })
+  @ApiBody({ type: CreatePostDto })
+  @ApiResponse({
+    status: 201,
+    description: 'The post has been successfully created.',
+    type: PostDto,
+  })
+  @ApiResponse({ status: 400, description: 'Invalid input' })
+  async createPost(@Body() createPostDto: CreatePostDto): Promise<PostEntity> {
+    const newPost = await this.postsService.create(createPostDto);
+    return {
+      ...newPost,
+      excerpt: newPost.excerpt ?? null,
+    };
+  }
 
   @Get()
   @ApiOperation({ summary: 'Retrieve all posts or filter by category/author' })
@@ -85,7 +105,7 @@ export class PostController {
     },
   })
   @ApiResponse({ status: 404, description: 'Post not found' })
-  async getPostById(@Param('id') id: string): Promise<Post> {
+  async getPostById(@Param('id') id: string): Promise<PostEntity> {
     const post = await this.postsService.findById(Number(id));
     if (!post) {
       throw new HttpException('Post not found', HttpStatus.NOT_FOUND);
@@ -96,7 +116,7 @@ export class PostController {
       authorId: post.authorId,
     };
   }
-  
+
   @Get(':id/details')
   @ApiOperation({ summary: 'Get post details including comments (newest first)' })
   @ApiParam({ name: 'id', description: 'Post ID', example: 1 })
@@ -112,4 +132,5 @@ export class PostController {
     }
     return post;
   }
+
 }

@@ -32,8 +32,10 @@ describe('PostController', () => {
     commentsCount: 5,
   };
 
-  // Create a mock for PostService
+  // Create a mock for PostService with a create method
   const postServiceMock = {
+    create: jest.fn(),
+    // ... other methods as needed
     findAll: jest.fn(),
     findByCategory: jest.fn(),
     findByAuthor: jest.fn(),
@@ -44,9 +46,7 @@ describe('PostController', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [PostController],
-      providers: [
-        { provide: PostService, useValue: postServiceMock },
-      ],
+      providers: [{ provide: PostService, useValue: postServiceMock }],
     }).compile();
 
     postController = module.get<PostController>(PostController);
