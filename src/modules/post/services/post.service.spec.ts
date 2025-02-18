@@ -3,6 +3,7 @@ import { PostService } from './post.service';
 import { PrismaService } from '../../../shared/prisma/prisma.service';
 import { Post, PrismaClient } from '@prisma/client';
 import { DeepMockProxy, mockDeep } from 'jest-mock-extended';
+import { UpdatePostDto } from '../dto/update-post.dto';
 
 describe('PostService', () => {
   let service: PostService;
@@ -61,7 +62,7 @@ describe('PostService', () => {
   ];
 
   // Expected posts after processing
-  const expectedPosts = mockPosts.map(post => ({
+  const expectedPosts = mockPosts.map((post) => ({
     ...post,
     author: post.author.username,
     authorId: post.author.id,
@@ -142,11 +143,11 @@ describe('PostService', () => {
         orderBy: { createdAt: 'desc' },
       });
       expect(result).toEqual(
-        filteredPosts.map(post => ({
+        filteredPosts.map((post) => ({
           ...post,
           author: post.author.username,
           authorId: post.author.id,
-        }))
+        })),
       );
     });
   });
@@ -154,8 +155,8 @@ describe('PostService', () => {
   describe('findByAuthor', () => {
     it('should return posts filtered by author', async () => {
       const author = 'Alice';
-      const filteredPosts = mockPosts.filter(
-        (post) => post.author.username.toLowerCase().includes(author.toLowerCase()),
+      const filteredPosts = mockPosts.filter((post) =>
+        post.author.username.toLowerCase().includes(author.toLowerCase()),
       );
       prismaService.post.findMany.mockResolvedValue(filteredPosts);
 
@@ -166,19 +167,102 @@ describe('PostService', () => {
             username: {
               contains: author,
               mode: 'insensitive',
-            }
-          }
+            },
+          },
         },
         include: { author: true },
         orderBy: { createdAt: 'desc' },
       });
       expect(result).toEqual(
-        filteredPosts.map(post => ({
+        filteredPosts.map((post) => ({
           ...post,
           author: post.author.username,
           authorId: post.author.id,
-        }))
+        })),
       );
+    });
+  });
+
+  describe('UpdatePost', () => {
+    let service: PostService;
+    let prismaService: DeepMockProxy<PrismaService>;
+
+    const existingPost = {
+      id: 1,
+      title: 'Old Title',
+      content: 'Old Content',
+      category: 'Tech',
+      excerpt: 'Old excerpt',
+      commentsCount: 2,
+      authorId: 1,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      author: { id: 1, username: 'Alice' },
+    };
+
+    const updatePostDto: UpdatePostDto = {
+      title: 'Updated Title',
+      content: 'Updated Content',
+      category: 'Tech',
+      excerpt: 'Updated excerpt',
+    };
+
+    const updatedPostFromDb = {
+      ...existingPost,
+      ...updatePostDto,
+      updatedAt: new Date(),
+    };
+
+    beforeEach(async () => {
+      const module: TestingModule = await Test.createTestingModule({
+        providers: [
+          PostService,
+          {
+            provide: PrismaService,
+            useValue: mockDeep<PrismaService>(),
+          },
+        ],
+      }).compile();
+
+      service = module.get<PostService>(PostService);
+      prismaService = module.get(PrismaService);
+    });
+
+    afterEach(() => {
+      jest.clearAllMocks();
+    });
+
+    it('should update and return the post if it exists', async () => {
+      prismaService.post.findUnique.mockResolvedValue(existingPost);
+      prismaService.post.update.mockResolvedValue(updatedPostFromDb);
+
+      const result = await service.updatePost(1, updatePostDto);
+
+      expect(prismaService.post.findUnique).toHaveBeenCalledWith({
+        where: { id: 1 },
+        include: { author: true },
+      });
+      expect(prismaService.post.update).toHaveBeenCalledWith({
+        where: { id: 1 },
+        data: updatePostDto,
+        include: { author: true },
+      });
+      expect(result).toEqual({
+        ...updatedPostFromDb,
+        excerpt: updatedPostFromDb.excerpt ?? null, // ensuring undefined becomes null
+      });
+    });
+
+    it('should return null if the post does not exist', async () => {
+      prismaService.post.findUnique.mockResolvedValue(null);
+
+      const result = await service.updatePost(999, updatePostDto);
+
+      expect(prismaService.post.findUnique).toHaveBeenCalledWith({
+        where: { id: 999 },
+        include: { author: true },
+      });
+      expect(result).toBeNull();
     });
   });
 });

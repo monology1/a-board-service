@@ -4,8 +4,10 @@ import {
   Param,
   Query,
   HttpException,
-  HttpStatus, Body,
+  HttpStatus,
+  Body,
   Post as HttpPost,
+  Put,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -14,18 +16,50 @@ import {
   ApiParam,
   ApiQuery,
   ApiOkResponse,
-  ApiNotFoundResponse, ApiBody,
+  ApiNotFoundResponse,
+  ApiBody,
 } from '@nestjs/swagger';
 import { PostDto } from './dto/post.dto';
 import { PostService } from './services/post.service';
 import { PostWithCommentsDto } from './dto/post-with-comment.dto';
 import { Post as PostEntity } from '@prisma/client';
 import { CreatePostDto } from './dto/create-post.dto';
+import { UpdatePostDto } from './dto/update-post.dto';
 
 @ApiTags('Posts')
 @Controller('posts')
 export class PostController {
   constructor(private readonly postsService: PostService) {}
+
+  @Put(':id')
+  @ApiOperation({ summary: 'Update a post by its ID' })
+  @ApiParam({
+    name: 'id',
+    description: 'The ID of the post to update',
+    example: 1,
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'The updated post',
+    type: PostDto,
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Post not found',
+  })
+  async updatePost(
+    @Param('id') id: string,
+    @Body() updatePostDto: UpdatePostDto,
+  ): Promise<PostEntity> {
+    const updatedPost = await this.postsService.updatePost(
+      Number(id),
+      updatePostDto,
+    );
+    if (!updatedPost) {
+      throw new HttpException('Post not found', HttpStatus.NOT_FOUND);
+    }
+    return updatedPost;
+  }
 
   @HttpPost()
   @ApiOperation({ summary: 'Create a new post' })
@@ -95,7 +129,10 @@ export class PostController {
       properties: {
         id: { type: 'number', example: 1 },
         title: { type: 'string', example: 'Example Post Title' },
-        content: { type: 'string', example: 'This is the content of the post.' },
+        content: {
+          type: 'string',
+          example: 'This is the content of the post.',
+        },
         category: { type: 'string', example: 'Tech' },
         author: { type: 'string', example: 'John Doe' },
         authorId: { type: 'number', example: 1 },
@@ -118,7 +155,9 @@ export class PostController {
   }
 
   @Get(':id/details')
-  @ApiOperation({ summary: 'Get post details including comments (newest first)' })
+  @ApiOperation({
+    summary: 'Get post details including comments (newest first)',
+  })
   @ApiParam({ name: 'id', description: 'Post ID', example: 1 })
   @ApiOkResponse({
     description: 'Post found, including comments sorted by newest first',
@@ -132,5 +171,4 @@ export class PostController {
     }
     return post;
   }
-
 }

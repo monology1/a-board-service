@@ -3,6 +3,8 @@ import { Post } from '../interface/post.interface';
 import { PrismaService } from '../../../shared/prisma/prisma.service';
 import { PostWithCommentsDto } from '../dto/post-with-comment.dto';
 import { CreatePostDto } from '../dto/create-post.dto';
+import { UpdatePostDto } from '../dto/update-post.dto';
+import { Post as PostEntity } from '@prisma/client';
 
 @Injectable()
 export class PostService {
@@ -135,6 +137,27 @@ export class PostService {
     return {
       ...createdPost,
       author: createdPost.author.username,
+    };
+  }
+
+  async updatePost(id: number, updatePostDto: UpdatePostDto): Promise<PostEntity | null> {
+    // Check if the post exists
+    const existingPost = await this.prisma.post.findUnique({
+      where: { id },
+      include: { author: true },
+    });
+    if (!existingPost) return null;
+
+    const updatedPost = await this.prisma.post.update({
+      where: { id },
+      data: { ...updatePostDto },
+      include: { author: true },
+    });
+
+    // Ensure excerpt is not undefined; if it is, return null instead.
+    return {
+      ...updatedPost,
+      excerpt: updatedPost.excerpt ?? null,
     };
   }
 }

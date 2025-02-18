@@ -2,6 +2,8 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { HttpException, HttpStatus } from '@nestjs/common';
 import { PostController } from './post.controller';
 import { PostService } from './services/post.service';
+import { UpdatePostDto } from './dto/update-post.dto';
+import { Post } from '@prisma/client';
 
 describe('PostController', () => {
   let postController: PostController;
@@ -63,7 +65,11 @@ describe('PostController', () => {
       const filteredPosts = [mockPost1];
       postServiceMock.findByCategory.mockResolvedValue(filteredPosts);
 
-      const result = await postController.getPosts(category, undefined, undefined);
+      const result = await postController.getPosts(
+        category,
+        undefined,
+        undefined,
+      );
 
       expect(postServiceMock.findByCategory).toHaveBeenCalledWith(category);
       expect(result).toEqual(filteredPosts);
@@ -74,7 +80,11 @@ describe('PostController', () => {
       const filteredPosts = [mockPost2];
       postServiceMock.findByAuthor.mockResolvedValue(filteredPosts);
 
-      const result = await postController.getPosts(undefined, author, undefined);
+      const result = await postController.getPosts(
+        undefined,
+        author,
+        undefined,
+      );
 
       expect(postServiceMock.findByAuthor).toHaveBeenCalledWith(author);
       expect(result).toEqual(filteredPosts);
@@ -84,7 +94,11 @@ describe('PostController', () => {
       const allPosts = [mockPost1, mockPost2];
       postServiceMock.findAll.mockResolvedValue(allPosts);
 
-      const result = await postController.getPosts(undefined, undefined, undefined);
+      const result = await postController.getPosts(
+        undefined,
+        undefined,
+        undefined,
+      );
 
       expect(postServiceMock.findAll).toHaveBeenCalled();
       expect(result).toEqual(allPosts);
@@ -132,7 +146,9 @@ describe('PostController', () => {
           },
         ],
       };
-      postServiceMock.findByIdWithComments.mockResolvedValue(mockPostWithComments);
+      postServiceMock.findByIdWithComments.mockResolvedValue(
+        mockPostWithComments,
+      );
 
       const result = await postController.getPostDetails(postId);
 
@@ -146,6 +162,70 @@ describe('PostController', () => {
 
       try {
         await postController.getPostDetails(postId);
+      } catch (error) {
+        expect(error).toBeInstanceOf(HttpException);
+        expect(error.message).toEqual('Post not found');
+        expect(error.getStatus()).toEqual(HttpStatus.NOT_FOUND);
+      }
+    });
+  });
+
+  describe('UpdatePost', () => {
+    let postController: PostController;
+    let postService: PostService;
+
+    const mockUpdateDto: UpdatePostDto = {
+      title: 'Updated Title',
+      content: 'Updated Content',
+      category: 'Tech',
+      excerpt: 'Updated excerpt',
+    };
+
+    const updatedPost: Post = {
+      id: 1,
+      title: 'Updated Title',
+      content: 'Updated Content',
+      category: 'Tech',
+      excerpt: 'Updated excerpt',
+      commentsCount: 5,
+      authorId: 1,
+      createdAt: new Date('2025-02-18T12:00:00Z'),
+      updatedAt: new Date('2025-02-18T12:00:00Z'),
+    };
+
+    const postServiceMock = {
+      updatePost: jest.fn(),
+    };
+
+    beforeEach(async () => {
+      const module: TestingModule = await Test.createTestingModule({
+        controllers: [PostController],
+        providers: [{ provide: PostService, useValue: postServiceMock }],
+      }).compile();
+
+      postController = module.get<PostController>(PostController);
+      postService = module.get<PostService>(PostService);
+    });
+
+    afterEach(() => {
+      jest.clearAllMocks();
+    });
+
+    it('should return the updated post when update is successful', async () => {
+      postServiceMock.updatePost.mockResolvedValue(updatedPost);
+
+      const result = await postController.updatePost('1', mockUpdateDto);
+      expect(postServiceMock.updatePost).toHaveBeenCalledWith(1, mockUpdateDto);
+      expect(result).toEqual(updatedPost);
+    });
+
+    it('should throw an HttpException with 404 status if post is not found', async () => {
+      postServiceMock.updatePost.mockResolvedValue(null);
+
+      try {
+        await postController.updatePost('999', mockUpdateDto);
+        // Fail the test if no error is thrown.
+        fail('Expected an HttpException to be thrown');
       } catch (error) {
         expect(error).toBeInstanceOf(HttpException);
         expect(error.message).toEqual('Post not found');
