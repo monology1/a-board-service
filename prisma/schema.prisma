@@ -20,4 +20,13 @@ model User {
   updatedAt DateTime @updatedAt
 }
 
-
+model Post {
+  id            Int      @id @default(autoincrement())
+  author        String
+  category      String
+  title         String
+  excerpt       String
+  commentsCount Int
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
