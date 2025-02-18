@@ -22,7 +22,12 @@ export class PostService {
 
   async findByAuthor(author: string): Promise<Post[]> {
     return this.prisma.post.findMany({
-      where: { author: { equals: author, mode: 'insensitive' } },
+      where: {
+        author: {
+          contains: author,
+          mode: 'insensitive',
+        },
+      },
     });
   }
 }
