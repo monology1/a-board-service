@@ -42,6 +42,18 @@ export class PostService {
     };
   }
 
+  async findAllByAuthorId(authorId: number): Promise<Post[]> {
+    const posts = await this.prisma.post.findMany({
+      where: { authorId },
+      include: { author: true },
+    });
+
+    return posts.map(post => ({
+      ...post,
+      author: post.author.username,
+    }));
+  }
+
   async findByCategory(category: string): Promise<Post[]> {
     const posts = await this.prisma.post.findMany({
       where: {
@@ -80,6 +92,24 @@ export class PostService {
       orderBy: {
         createdAt: 'desc',
       },
+    });
+
+    return posts.map(post => ({
+      ...post,
+      author: post.author.username,
+    }));
+  }
+
+  async findByTitle(title: string): Promise<Post[]> {
+    const posts = await this.prisma.post.findMany({
+      where: {
+        title: {
+          contains: title,
+          mode: 'insensitive',
+        },
+      },
+      include: { author: true },
+      orderBy: { createdAt: 'desc' },
     });
 
     return posts.map(post => ({

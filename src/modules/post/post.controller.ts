@@ -7,7 +7,9 @@ import {
   HttpStatus,
   Body,
   Post as HttpPost,
-  Put, Delete,
+  Put,
+  Delete,
+  ParseIntPipe,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -25,6 +27,7 @@ import { PostWithCommentsDto } from './dto/post-with-comment.dto';
 import { Post as PostEntity } from '@prisma/client';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
+import { OptionalParseIntPipe } from '../../shared/pipe/option-parse-int.pipe';
 
 @ApiTags('Posts')
 @Controller('posts')
@@ -117,6 +120,11 @@ export class PostController {
     required: false,
     description: 'Filter posts by title',
   })
+  @ApiQuery({
+    name: 'id',
+    required: false,
+    description: 'Retrieve a specific post by its ID',
+  })
   @ApiOkResponse({
     description: 'List of posts',
     type: PostDto,
@@ -126,12 +134,19 @@ export class PostController {
     @Query('category') category?: string,
     @Query('author') author?: string,
     @Query('title') title?: string,
+    @Query('id', OptionalParseIntPipe) id?: number,
   ): Promise<PostDto[]> {
     if (category) {
       return await this.postsService.findByCategory(category);
     }
     if (author) {
       return await this.postsService.findByAuthor(author);
+    }
+    if (id) {
+      return await this.postsService.findAllByAuthorId(id);
+    }
+    if (title) {
+      return await this.postsService.findByTitle(title);
     }
     return await this.postsService.findAll();
   }
