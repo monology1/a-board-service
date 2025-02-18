@@ -160,4 +160,18 @@ export class PostService {
       excerpt: updatedPost.excerpt ?? null,
     };
   }
+
+  async deletePost(id: number): Promise<boolean> {
+    // Check if the post exists first
+    const existingPost = await this.prisma.post.findUnique({
+      where: { id },
+    });
+    if (!existingPost) {
+      return false;
+    }
+    await this.prisma.post.delete({
+      where: { id },
+    });
+    return true;
+  }
 }

@@ -7,7 +7,7 @@ import {
   HttpStatus,
   Body,
   Post as HttpPost,
-  Put,
+  Put, Delete,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -30,6 +30,28 @@ import { UpdatePostDto } from './dto/update-post.dto';
 @Controller('posts')
 export class PostController {
   constructor(private readonly postsService: PostService) {}
+
+  @Delete(':id')
+  @ApiOperation({ summary: 'Delete a post by its ID' })
+  @ApiParam({
+    name: 'id',
+    description: 'The ID of the post to delete',
+    example: 1,
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Post deleted successfully',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Post not found',
+  })
+  async deletePost(@Param('id') id: string): Promise<void> {
+    const deleted = await this.postsService.deletePost(Number(id));
+    if (!deleted) {
+      throw new HttpException('Post not found', HttpStatus.NOT_FOUND);
+    }
+  }
 
   @Put(':id')
   @ApiOperation({ summary: 'Update a post by its ID' })

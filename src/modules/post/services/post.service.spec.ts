@@ -265,4 +265,61 @@ describe('PostService', () => {
       expect(result).toBeNull();
     });
   });
+
+  describe('DeletePost', () => {
+    let service: PostService;
+    let prismaService: DeepMockProxy<PrismaService>;
+
+    const existingPost = {
+      id: 1,
+      title: 'Existing Post',
+      content: 'Content',
+      category: 'Tech',
+      excerpt: 'Excerpt',
+      commentsCount: 3,
+      authorId: 1,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    beforeEach(async () => {
+      const module: TestingModule = await Test.createTestingModule({
+        providers: [
+          PostService,
+          { provide: PrismaService, useValue: mockDeep<PrismaService>() },
+        ],
+      }).compile();
+
+      service = module.get<PostService>(PostService);
+      prismaService = module.get(PrismaService);
+    });
+
+    afterEach(() => {
+      jest.clearAllMocks();
+    });
+
+    it('should delete and return true when the post exists', async () => {
+      prismaService.post.findUnique.mockResolvedValue(existingPost);
+      prismaService.post.delete.mockResolvedValue(existingPost);
+
+      const result = await service.deletePost(1);
+      expect(prismaService.post.findUnique).toHaveBeenCalledWith({
+        where: { id: 1 },
+      });
+      expect(prismaService.post.delete).toHaveBeenCalledWith({
+        where: { id: 1 },
+      });
+      expect(result).toBe(true);
+    });
+
+    it('should return false when the post does not exist', async () => {
+      prismaService.post.findUnique.mockResolvedValue(null);
+
+      const result = await service.deletePost(999);
+      expect(prismaService.post.findUnique).toHaveBeenCalledWith({
+        where: { id: 999 },
+      });
+      expect(result).toBe(false);
+    });
+  });
 });

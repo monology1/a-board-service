@@ -233,4 +233,48 @@ describe('PostController', () => {
       }
     });
   });
+
+  describe('DeletePost', () => {
+    let postController: PostController;
+    let postService: PostService;
+
+    const postServiceMock = {
+      deletePost: jest.fn(),
+    };
+
+    beforeEach(async () => {
+      const module: TestingModule = await Test.createTestingModule({
+        controllers: [PostController],
+        providers: [{ provide: PostService, useValue: postServiceMock }],
+      }).compile();
+
+      postController = module.get<PostController>(PostController);
+      postService = module.get<PostService>(PostService);
+    });
+
+    afterEach(() => {
+      jest.clearAllMocks();
+    });
+
+    it('should return 200 when deletion is successful', async () => {
+      postServiceMock.deletePost.mockResolvedValue(true);
+
+      // Should complete without throwing an error
+      await expect(postController.deletePost('1')).resolves.toBeUndefined();
+      expect(postServiceMock.deletePost).toHaveBeenCalledWith(1);
+    });
+
+    it('should throw a 404 HttpException when post is not found', async () => {
+      postServiceMock.deletePost.mockResolvedValue(false);
+
+      try {
+        await postController.deletePost('999');
+        fail('Expected HttpException to be thrown');
+      } catch (error) {
+        expect(error).toBeInstanceOf(HttpException);
+        expect(error.message).toEqual('Post not found');
+        expect(error.getStatus()).toEqual(HttpStatus.NOT_FOUND);
+      }
+    });
+  });
 });
