@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Post } from '../interface/post.interface';
 import { PrismaService } from '../../../shared/prisma/prisma.service';
+import { PostWithCommentsDto } from '../dto/post-with-comment.dto';
 
 @Injectable()
 export class PostService {
@@ -50,13 +51,28 @@ export class PostService {
     return this.prisma.post.findMany({
       where: {
         title: {
-          contains: title, // partial matching
+          contains: title,
           mode: 'insensitive',
         },
       },
       orderBy: {
-        createdAt: 'desc', // newest to oldest
+        createdAt: 'desc',
       },
     });
+  }
+
+  async findByIdWithComments(id: number): Promise<PostWithCommentsDto | null> {
+    const post = await this.prisma.post.findUnique({
+      where: { id },
+      include: {
+        comments: {
+          orderBy: { createdAt: 'desc' },
+        },
+      },
+    });
+
+    if (!post) return null;
+
+    return post as unknown as PostWithCommentsDto;
   }
 }

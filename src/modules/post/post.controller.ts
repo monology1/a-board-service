@@ -12,10 +12,12 @@ import {
   ApiResponse,
   ApiParam,
   ApiQuery,
-  ApiOkResponse,
+  ApiOkResponse, ApiNotFoundResponse,
 } from '@nestjs/swagger';
 import { PostDto } from './dto/post.dto';
 import { PostService } from './services/post.service';
+import { PostWithCommentsDto } from './dto/post-with-comment.dto';
+import { Post } from '@prisma/client';
 
 @ApiTags('Posts')
 @Controller('posts')
@@ -85,8 +87,27 @@ export class PostController {
     },
   })
   @ApiResponse({ status: 404, description: 'Post not found' })
-  async getPostById(@Param('id') id: string): Promise<PostDto> {
+  async getPostById(@Param('id') id: string): Promise<Post> {
     const post = await this.postsService.findById(Number(id));
+    if (!post) {
+      throw new HttpException('Post not found', HttpStatus.NOT_FOUND);
+    }
+    return {
+      ...post,
+      excerpt: post.excerpt ?? null,
+    };
+  }
+
+  @Get(':id/details')
+  @ApiOperation({ summary: 'Get post details including comments (newest first)' })
+  @ApiParam({ name: 'id', description: 'Post ID', example: 1 })
+  @ApiOkResponse({
+    description: 'Post found, including comments sorted by newest first',
+    type: PostWithCommentsDto,
+  })
+  @ApiNotFoundResponse({ description: 'Post not found' })
+  async getPostDetails(@Param('id') id: string): Promise<PostWithCommentsDto> {
+    const post = await this.postsService.findByIdWithComments(Number(id));
     if (!post) {
       throw new HttpException('Post not found', HttpStatus.NOT_FOUND);
     }

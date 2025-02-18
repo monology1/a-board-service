@@ -1,10 +1,12 @@
 export interface Post {
   id: number;
-  author: string;
-  category: string;
   title: string;
-  excerpt: string;
-  commentsCount: number;
+  content: string;
+  category: string;
+  author: string;
   createdAt: Date;
   updatedAt: Date;
+  excerpt?: string | null;
+  commentsCount: number;
+  comments?: Comment[];
 }

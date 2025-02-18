@@ -14,7 +14,7 @@ export class PostDto {
   title: string;
 
   @ApiProperty({ example: 'A short excerpt or summary of the post content.', description: 'Short excerpt of the post' })
-  excerpt: string;
+  excerpt?: string | null;
 
   @ApiProperty({ example: 5, description: 'Number of comments on the post' })
   commentsCount: number;

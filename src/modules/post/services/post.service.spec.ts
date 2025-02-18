@@ -1,32 +1,35 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { PostService } from './post.service';
-import { Post } from '../interface/post.interface';
 import { PrismaService } from '../../../shared/prisma/prisma.service';
 
 describe('PostService', () => {
   let service: PostService;
   let prismaService: PrismaService;
 
-  const mockPosts: Post[] = [
+  // Create mock posts with excerpt explicitly defined (as string or null)
+  const now = new Date();
+  const mockPosts = [
     {
       id: 1,
       title: 'Post 1',
+      content: 'Content for post 1',
       category: 'Tech',
       author: 'Alice',
-      excerpt: '',
+      excerpt: '', // defined as empty string
       commentsCount: 0,
-      createdAt: new Date(),
-      updatedAt: new Date(),
+      createdAt: now,
+      updatedAt: now,
     },
     {
       id: 2,
       title: 'Post 2',
+      content: 'Content for post 2',
       category: 'News',
       author: 'Bob',
-      excerpt: '',
-      commentsCount: 0,
-      createdAt: new Date(),
-      updatedAt: new Date(),
+      excerpt: 'Excerpt for post 2',
+      commentsCount: 5,
+      createdAt: now,
+      updatedAt: now,
     },
   ];
 
@@ -41,10 +44,7 @@ describe('PostService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         PostService,
-        {
-          provide: PrismaService,
-          useValue: prismaServiceMock,
-        },
+        { provide: PrismaService, useValue: prismaServiceMock },
       ],
     }).compile();
 
@@ -58,7 +58,7 @@ describe('PostService', () => {
 
   describe('findAll', () => {
     it('should return an array of posts', async () => {
-      (prismaService.post.findMany as jest.Mock).mockResolvedValue(mockPosts);;
+      (prismaService.post.findMany as jest.Mock).mockResolvedValue(mockPosts);
       const posts = await service.findAll();
       expect(prismaService.post.findMany).toHaveBeenCalled();
       expect(posts).toEqual(mockPosts);
@@ -71,7 +71,6 @@ describe('PostService', () => {
       (prismaService.post.findUnique as jest.Mock).mockResolvedValue(post);
 
       const result = await service.findById(1);
-
       expect(prismaService.post.findUnique).toHaveBeenCalledWith({
         where: { id: 1 },
       });
@@ -82,7 +81,6 @@ describe('PostService', () => {
       (prismaService.post.findUnique as jest.Mock).mockResolvedValue(null);
 
       const result = await service.findById(999);
-
       expect(prismaService.post.findUnique).toHaveBeenCalledWith({
         where: { id: 999 },
       });
@@ -98,8 +96,10 @@ describe('PostService', () => {
       );
       (prismaService.post.findMany as jest.Mock).mockResolvedValue(filteredPosts);
       const result = await service.findByCategory(category);
+
       expect(prismaService.post.findMany).toHaveBeenCalledWith({
         where: { category: { equals: category, mode: 'insensitive' } },
+        orderBy: { createdAt: 'desc' },
       });
       expect(result).toEqual(filteredPosts);
     });
@@ -109,12 +109,14 @@ describe('PostService', () => {
     it('should return posts filtered by author', async () => {
       const author = 'Alice';
       const filteredPosts = mockPosts.filter(
-        (post) => post.author.toLowerCase() === author.toLowerCase(),
+        (post) => post.author.toLowerCase().includes(author.toLowerCase()),
       );
       (prismaService.post.findMany as jest.Mock).mockResolvedValue(filteredPosts);
       const result = await service.findByAuthor(author);
+
       expect(prismaService.post.findMany).toHaveBeenCalledWith({
-        where: { author: { equals: author, mode: 'insensitive' } },
+        where: { author: { contains: author, mode: 'insensitive' } },
+        orderBy: { createdAt: 'desc' },
       });
       expect(result).toEqual(filteredPosts);
     });
