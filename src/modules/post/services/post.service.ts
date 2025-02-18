@@ -8,64 +8,92 @@ export class PostService {
   constructor(private readonly prisma: PrismaService) {}
 
   async findAll(): Promise<Post[]> {
-    return this.prisma.post.findMany({
+    const posts = await this.prisma.post.findMany({
+      include: {
+        author: true
+      },
       orderBy: {
         createdAt: 'desc',
       },
     });
+
+    return posts.map(post => ({
+      ...post,
+      author: post.author.username,
+    }));
   }
 
   async findById(id: number): Promise<Post | null> {
-    return this.prisma.post.findUnique({ where: { id } });
+    const post = await this.prisma.post.findUnique({
+      where: { id },
+      include: {
+        author: true
+      }
+    });
+
+    if (!post) return null;
+
+    return {
+      ...post,
+      author: post.author.username,
+    };
   }
 
   async findByCategory(category: string): Promise<Post[]> {
-    return this.prisma.post.findMany({
+    const posts = await this.prisma.post.findMany({
       where: {
         category: {
           equals: category,
           mode: 'insensitive',
         },
       },
+      include: {
+        author: true
+      },
       orderBy: {
         createdAt: 'desc',
       },
     });
+
+    return posts.map(post => ({
+      ...post,
+      author: post.author.username,
+    }));
   }
 
   async findByAuthor(author: string): Promise<Post[]> {
-    return this.prisma.post.findMany({
+    const posts = await this.prisma.post.findMany({
       where: {
         author: {
-          contains: author,
-          mode: 'insensitive',
-        },
+          username: {
+            contains: author,
+            mode: 'insensitive',
+          }
+        }
+      },
+      include: {
+        author: true
       },
       orderBy: {
         createdAt: 'desc',
       },
     });
-  }
 
-  async findByTitle(title: string): Promise<Post[]> {
-    return this.prisma.post.findMany({
-      where: {
-        title: {
-          contains: title,
-          mode: 'insensitive',
-        },
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-    });
+    return posts.map(post => ({
+      ...post,
+      author: post.author.username,
+    }));
   }
 
   async findByIdWithComments(id: number): Promise<PostWithCommentsDto | null> {
     const post = await this.prisma.post.findUnique({
       where: { id },
       include: {
+        author: true,
         comments: {
+          include: {
+            author: true
+          },
           orderBy: { createdAt: 'desc' },
         },
       },
@@ -73,6 +101,16 @@ export class PostService {
 
     if (!post) return null;
 
-    return post as unknown as PostWithCommentsDto;
+    return {
+      ...post,
+      author: post.author.username,
+      authorId: post.authorId,
+      comments: post.comments.map(comment => ({
+        ...comment,
+        author: comment.author.username,
+        createdAt: comment.createdAt.toISOString(),
+        updatedAt: comment.updatedAt.toISOString()
+      }))
+    };
   }
 }

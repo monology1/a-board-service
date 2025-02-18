@@ -75,12 +75,10 @@ export class PostController {
       properties: {
         id: { type: 'number', example: 1 },
         title: { type: 'string', example: 'Example Post Title' },
-        content: {
-          type: 'string',
-          example: 'This is the content of the post.',
-        },
+        content: { type: 'string', example: 'This is the content of the post.' },
         category: { type: 'string', example: 'Tech' },
         author: { type: 'string', example: 'John Doe' },
+        authorId: { type: 'number', example: 1 },
         createdAt: { type: 'string', example: '2025-02-18T12:00:00Z' },
         updatedAt: { type: 'string', example: '2025-02-18T12:00:00Z' },
       },
@@ -95,9 +93,10 @@ export class PostController {
     return {
       ...post,
       excerpt: post.excerpt ?? null,
+      authorId: post.authorId,
     };
   }
-
+  
   @Get(':id/details')
   @ApiOperation({ summary: 'Get post details including comments (newest first)' })
   @ApiParam({ name: 'id', description: 'Post ID', example: 1 })

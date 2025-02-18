@@ -7,6 +7,9 @@ export class PostDto {
   @ApiProperty({ example: 'John Doe', description: 'The author of the post' })
   author: string;
 
+  @ApiProperty({ example: 1, description: 'The ID of the author' })
+  authorId: number;
+
   @ApiProperty({ example: 'Tech', description: 'The category of the post' })
   category: string;
 

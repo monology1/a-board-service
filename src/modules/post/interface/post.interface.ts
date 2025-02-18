@@ -4,6 +4,7 @@ export interface Post {
   content: string;
   category: string;
   author: string;
+  authorId: number;
   createdAt: Date;
   updatedAt: Date;
   excerpt?: string | null;

@@ -3,142 +3,125 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 //
-// 1. POSTS DATA
+// 1. USERS DATA
 //
-const posts = [
+const users = [
   {
-    id: 1,
-    author: 'Writesel',
-    category: 'History',
-    title: 'The Beginning of the End of the World',
-    excerpt:
-      "The afterlife vision The Good Place comes to its culmination, the show's two protagonists, Eleanor and Chidi, contemplate their future...",
-    content: 'Full content for "The Beginning of the End of the World"...',
-    commentsCount: 32,
+    username: 'writesel',
+    firstName: 'Sarah',
+    lastName: 'Writesel',
+    email: 'sarah.writesel@example.com',
+    bio: 'History enthusiast and storyteller',
+    avatar: 'https://example.com/avatars/writesel.jpg',
   },
   {
-    id: 2,
-    author: 'Zach',
-    category: 'History',
-    title: 'The Big Short War',
-    excerpt:
-      'He was the kind of hyper-ambitious kid other kids tend to hate. On the night before the L.A.P.D, his father took pity on him and cancelled the trip...',
-    content: 'Full content for "The Big Short War"...',
-    commentsCount: 14,
+    username: 'zach',
+    firstName: 'Zachary',
+    lastName: 'Thompson',
+    email: 'zach.thompson@example.com',
+    bio: 'Financial analyst and history buff',
+    avatar: 'https://example.com/avatars/zach.jpg',
   },
   {
-    id: 3,
-    author: 'Nicholas',
-    category: 'Exercise',
-    title: 'The Mental Health Benefits of Exercise',
-    excerpt:
-      'You already know that exercise is good for your body. But did you know it can also boost your mood, improve your sleep, and help you deal with stress?',
-    content: 'Full content for "The Mental Health Benefits of Exercise" (1)...',
-    commentsCount: 32,
-  },
-  {
-    id: 4,
-    author: 'Nicholas',
-    category: 'Exercise',
-    title: 'The Mental Health Benefits of Exercise',
-    excerpt:
-      'You already know that exercise is good for your body. But did you know it can also boost your mood, improve your sleep, and help you deal with stress?',
-    content: 'Full content for "The Mental Health Benefits of Exercise" (2)...',
-    commentsCount: 32,
-  },
-  {
-    id: 5,
-    author: 'Nicholas',
-    category: 'Exercise',
-    title: 'The Mental Health Benefits of Exercise',
-    excerpt:
-      'You already know that exercise is good for your body. But did you know it can also boost your mood, improve your sleep, and help you deal with stress?',
-    content: 'Full content for "The Mental Health Benefits of Exercise" (3)...',
-    commentsCount: 32,
-  },
-  {
-    id: 6,
-    author: 'Nicholas',
-    category: 'Exercise',
-    title: 'The Mental Health Benefits of Exercise',
-    excerpt:
-      'You already know that exercise is good for your body. But did you know it can also boost your mood, improve your sleep, and help you deal with stress?',
-    content: 'Full content for "The Mental Health Benefits of Exercise" (4)...',
-    commentsCount: 32,
+    username: 'nicholas',
+    firstName: 'Nicholas',
+    lastName: 'Chen',
+    email: 'nicholas.chen@example.com',
+    bio: 'Fitness expert and wellness coach',
+    avatar: 'https://example.com/avatars/nicholas.jpg',
   },
 ];
 
 //
-// 2. COMMENTS DATA
+// 2. POSTS DATA
 //
-const comments = [
-  // For post with id=2 ("The Big Short War")
+const createPosts = (users: any[]) => [
   {
-    id: 101,
-    author: 'Wittawat88',
-    content: 'Lorem ipsum dolor sit amet consectetur. Purus cursus vel a et pretium quam imperdiet.',
-    postId: 2,
+    title: 'The Beginning of the End of the World',
+    content: 'Full content for "The Beginning of the End of the World"...',
+    category: 'History',
+    excerpt:
+      "The afterlife vision The Good Place comes to its culmination, the show's two protagonists, Eleanor and Chidi, contemplate their future...",
+    commentsCount: 32,
+    authorId: users[0].id, // Writesel
   },
   {
-    id: 102,
-    author: 'Hawaii5',
-    content: 'Lorem ipsum dolor sit amet consectetur. Amet mollis eget fringilla et fusce.',
-    postId: 2,
+    title: 'The Big Short War',
+    content: 'Full content for "The Big Short War"...',
+    category: 'History',
+    excerpt:
+      'He was the kind of hyper-ambitious kid other kids tend to hate. On the night before the L.A.P.D, his father took pity on him and cancelled the trip...',
+    commentsCount: 14,
+    authorId: users[1].id, // Zach
   },
   {
-    id: 103,
-    author: 'Ace123',
-    content: 'Lorem ipsum dolor sit amet consectetur. Purus cursus vel a et pretium quam imperdiet.',
-    postId: 2,
+    title: 'The Mental Health Benefits of Exercise',
+    content: 'Full content for "The Mental Health Benefits of Exercise"...',
+    category: 'Exercise',
+    excerpt:
+      'You already know that exercise is good for your body. But did you know it can also boost your mood, improve your sleep, and help you deal with stress?',
+    commentsCount: 32,
+    authorId: users[2].id, // Nicholas
   },
+];
 
-  // For post with id=1 ("The Beginning of the End of the World")
+//
+// 3. COMMENTS DATA
+//
+const createComments = (users: any[], posts: any[]) => [
   {
-    id: 104,
-    author: 'UserA',
     content: 'Great post! Thanks for sharing.',
-    postId: 1,
+    authorId: users[1].id, // Zach commenting
+    postId: posts[0].id, // on Writesel's post
   },
   {
-    id: 105,
-    author: 'UserB',
     content: 'I disagree with some points, but interesting read.',
-    postId: 1,
+    authorId: users[2].id, // Nicholas commenting
+    postId: posts[0].id, // on Writesel's post
+  },
+  {
+    content: 'This really helped me understand the topic better.',
+    authorId: users[0].id, // Writesel commenting
+    postId: posts[1].id, // on Zach's post
   },
 ];
 
 async function main() {
-  // Upsert all posts
-  for (const post of posts) {
-    await prisma.post.upsert({
-      where: { id: post.id },
-      update: {
-        author: post.author,
-        category: post.category,
-        title: post.title,
-        excerpt: post.excerpt,
-        content: post.content,
-        commentsCount: post.commentsCount,
-      },
-      create: {
-        ...post,
-      },
+  console.log('Start seeding...');
+
+  // Clear existing data
+  await prisma.comment.deleteMany();
+  await prisma.post.deleteMany();
+  await prisma.user.deleteMany();
+
+  // Create users
+  const createdUsers: any = [];
+  for (const user of users) {
+    const createdUser = await prisma.user.create({
+      data: user,
     });
+    createdUsers.push(createdUser);
+    console.log(`Created user: ${createdUser.username}`);
   }
 
-  // Upsert all comments
-  for (const comment of comments) {
-    await prisma.comment.upsert({
-      where: { id: comment.id },
-      update: {
-        author: comment.author,
-        content: comment.content,
-        postId: comment.postId,
-      },
-      create: {
-        ...comment,
-      },
+  // Create posts
+  const posts: any = createPosts(createdUsers);
+  const createdPosts: any = [];
+  for (const post of posts) {
+    const createdPost = await prisma.post.create({
+      data: post,
     });
+    createdPosts.push(createdPost);
+    console.log(`Created post: ${createdPost.title}`);
+  }
+
+  // Create comments
+  const comments: any = createComments(createdUsers, createdPosts);
+  for (const comment of comments) {
+    const createdComment = await prisma.comment.create({
+      data: comment,
+    });
+    console.log(`Created comment: ${createdComment.id}`);
   }
 
   console.log('Seeding completed.');
@@ -146,7 +129,7 @@ async function main() {
 
 main()
   .catch((e) => {
-    console.error(e);
+    console.error('Error during seeding:', e);
     process.exit(1);
   })
   .finally(async () => {
